@@ -6,8 +6,7 @@ from pydantic import BaseModel
 import openai
 
 # Set your OpenAI API key directly (you can secure this later with environment variables)
-openai.api_key = "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"  # Replace with your real key
-
+openai.api_key = ""
 app = FastAPI(
     title="DocGenie",
     version="0.1.0",
