@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocGenie - AI Code Documentation</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #222222;
+    }
+
+    header {
+      padding: 1rem;
+      background-color: #f0f0f0;
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 30px;
+      background-color: #f7f7f7;
+      border-radius: 20px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p {
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      color: #555;
+    }
+
+    label,
+    textarea,
+    select {
+      display: block;
+      width: 100%;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    textarea {
+      min-height: 150px;
+      padding: 0.75rem;
+      background-color: #ffffff;
+      color: #222;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: vertical;
+    }
+
+    select {
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      background-color: #fff;
+    }
+
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      flex: 1;
+      background-color: #007BFF;
+      color: #fff;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background-color 0.3s;
+      min-width: 140px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #loading {
+      display: none;
+      text-align: center;
+      padding: 1rem;
+    }
+
+    .dot-loader span {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      margin: 0 5px;
+      background-color: #007BFF;
+      border-radius: 50%;
+      animation: pulse 0.6s infinite alternate;
+    }
+
+    .dot-loader span:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+
+    .dot-loader span:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+
+    @keyframes pulse {
+      to {
+        transform: scale(1.4);
+        opacity: 0.6;
+      }
+    }
+
+    pre {
+      background-color: #f0f0f0;
+      padding: 1rem;
+      overflow-x: auto;
+      border-radius: 5px;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        margin: 20px 10px;
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+      }
+
+      button {
+        font-size: 1rem;
+        padding: 0.6rem;
+      }
+
+      textarea {
+        min-height: 120px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 480px) {
+      header {
+        font-size: 1.4rem;
+        padding: 0.8rem;
+      }
+
+      h1 {
+        font-size: 1.2rem;
+      }
+
+      .container {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>🧠 DocGenie</h1>
+    <p>Generate intelligent documentation for your code</p>
+
+    <label for="code">Enter your code:</label>
+    <textarea id="code" placeholder="Paste your code here..."></textarea>
+
+    <label for="language">Language:</label>
+    <select id="language">
+      <option value="python">Python</option>
+      <option value="javascript">JavaScript</option>
+      <option value="java">Java</option>
+      <option value="c++">C++</option>
+      <option value="c#">C#</option>
+    </select>
+
+    <div class="button-group">
+      <button onclick="generateDoc()">Generate Documentation</button>
+      <button onclick="downloadPDF()">📥 Download</button>
+    </div>
+
+    <div id="loading" class="dot-loader">
+      <span></span><span></span><span></span>
+    </div>
+
+    <div id="output"></div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script>
+    async function generateDoc() {
+      const code = document.getElementById("code").value;
+      const language = document.getElementById("language").value;
+      const output = document.getElementById("output");
+      const loading = document.getElementById("loading");
+
+      output.innerHTML = "";
+      loading.style.display = "block";
+
+      try {
+        const response = await fetch("/generate-doc", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ code, language })
+        });
+
+        const result = await response.json();
+        const docHTML = marked.parse(result.documentation);
+        output.innerHTML = `<div id="docContent">${docHTML}</div>`;
+        hljs.highlightAll();
+      } catch (error) {
+        output.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+      } finally {
+        loading.style.display = "none";
+      }
+    }
+
+    function downloadPDF() {
+      const doc = document.getElementById("docContent");
+      if (!doc) {
+        alert("Please generate documentation first.");
+        return;
+      }
+
+      const opt = {
+        margin:       0.5,
+        filename:     'DocGenie_Documentation.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+
+      html2pdf().from(doc).set(opt).save();
+    }
+  </script>
+</body>
+</html>
